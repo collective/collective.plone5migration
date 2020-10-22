@@ -1,4 +1,4 @@
-ugent.plone5migration Copyright 2019, Andreas Jung
+collective.plone5migration Copyright 2019, Andreas Jung
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License version 2

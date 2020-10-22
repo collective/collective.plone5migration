@@ -3,7 +3,7 @@
    This text does not appear on pypi or github. It is a comment.
 
 =====================
-ugent.plone5migration
+collective.plone5migration
 =====================
 
 Tell me what your product does
@@ -38,14 +38,14 @@ This product has been translated into
 Installation
 ------------
 
-Install ugent.plone5migration by adding it to your buildout::
+Install collective.plone5migration by adding it to your buildout::
 
     [buildout]
 
     ...
 
     eggs =
-        ugent.plone5migration
+        collective.plone5migration
 
 
 and then running ``bin/buildout``
@@ -54,8 +54,8 @@ and then running ``bin/buildout``
 Contribute
 ----------
 
-- Issue Tracker: https://github.com/collective/ugent.plone5migration/issues
-- Source Code: https://github.com/collective/ugent.plone5migration
+- Issue Tracker: https://github.com/collective/collective.plone5migration/issues
+- Source Code: https://github.com/collective/collective.plone5migration
 - Documentation: https://docs.plone.org/foo/bar
 
 

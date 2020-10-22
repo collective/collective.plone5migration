@@ -14,7 +14,7 @@ Changelog
 - PCM-1778 set local roles for SubsiteFolder based Folder + default page [ajung]
 - PCM-1818 adjusted layout migration [ajung]
 - PCM-1864 fix for migrating folder review_state "private" [ajung]
-- PCM-1847 whitelist ugent.collectiondelete.interfaces.ICollectionDelete [ajung]
+- PCM-1847 whitelist collective.collectiondelete.interfaces.ICollectionDelete [ajung]
 - PCM-1813 always migrate type constraints (independent of navigation root) [ajung]
 - PCM-1818 switching to listing_view only for Topics [ajung]
 - PCM-1868 portal type replacements for old type criterion [ajung]
