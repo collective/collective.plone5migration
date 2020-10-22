@@ -61,65 +61,6 @@ def replace_expressions(xml):
     xml = xml.replace(
         "folder.login2mail()", "object.restrictedTraverse('@@memberEmail')()"
     )
-    xml = xml.replace(
-        "folder.login2mail", "object.restrictedTraverse('@@memberEmail')()"
-    )
-    xml = xml.replace(
-        "folder.login2email()", "object.restrictedTraverse('@@memberEmail')()"
-    )
-    xml = xml.replace(
-        "folder.login2email", "object.restrictedTraverse('@@memberEmail')()"
-    )
-    xml = xml.replace(
-        "folder.login2fullname()", "object.restrictedTraverse('@@memberFullname')()"
-    )
-    xml = xml.replace(
-        "folder.login2ugentid()", "object.restrictedTraverse('@@memberUgentId')()"
-    )
-    xml = xml.replace(
-        "folder.login2voornaam()", "object.restrictedTraverse('@@memberFirstname')()"
-    )
-    xml = xml.replace(
-        "folder.login2voornaam", "object.restrictedTraverse('@@memberFirstname')()"
-    )
-    xml = xml.replace(
-        "folder.login2name()", "object.restrictedTraverse('@@memberLastname')()"
-    )
-    xml = xml.replace(
-        "folder.login2name", "object.restrictedTraverse('@@memberLastname')()"
-    )
-    xml = xml.replace(
-        "folder.login2straat()", "object.restrictedTraverse('@@memberStreet')()"
-    )
-    xml = xml.replace(
-        "folder.login2straat()", "object.restrictedTraverse('@@memberStreet')()"
-    )
-    xml = xml.replace(
-        "folder.login2mobile()", "object.restrictedTraverse('@@memberMobile')()"
-    )
-    xml = xml.replace(
-        "folder.login2mobile()", "object.restrictedTraverse('@@memberMobile')()"
-    )
-    xml = xml.replace(
-        "folder.login2studentid()", "object.restrictedTraverse('@@memberStudentId')()"
-    )
-    xml = xml.replace(
-        "folder.login2department()", "object.restrictedTraverse('@@memberDepartment')()"
-    )
-    xml = xml.replace(
-        "folder.login2deptnaam()", "object.restrictedTraverse('@@memberDepartment')()"
-    )
-    xml = xml.replace(
-        "folder.login2plaats()", "object.restrictedTraverse('@@memberLocation')()"
-    )
-    xml = xml.replace(
-        "folder.login2adresdelen()",
-        "object.restrictedTraverse('@@memberAddressParts')()",
-    )
-    xml = xml.replace("DateTime()", "object.restrictedTraverse('@@datetime_now')()")
-    # only used for /plone_portal/nl/agenda/activiteit-toevoegen/wanneer/eind-datum
-    # no replacement
-    xml = xml.replace("python: folder.end_date_validator(value)", "")
     return xml
 
 

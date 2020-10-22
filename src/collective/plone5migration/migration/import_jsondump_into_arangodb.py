@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This scripts imports a JSON export made with `collective.jsonify` into
-# ArangoDB (database: ugent, collection: portal by default)
+# ArangoDB (database: collective, collection: portal by default)
 
 import os
 import json
@@ -18,7 +18,7 @@ import_dir = "/home/ajung/content_plone_portal_2019-05-13-11-47-28/"
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--database", default="ugent", help="ArangoDB database")
+    parser.add_argument("-d", "--database", default="collective", help="ArangoDB database")
     parser.add_argument(
         "-c", "--collection", default="import", help="ArangoDB collection"
     )
@@ -105,7 +105,7 @@ def main():
         data["_paths_all"] = all_paths
         data["_relative_path"] = relative_path
         data["hasRelatedItems"] = len(data.get("relatedItems", ())) > 0
-        data["_ugent_type"] = "content"  # mark imported content as content
+        data["_import_type"] = "content"  # mark imported content as content
         data["_object_id"] = data["_id"]  # original object id
         del data["_id"]  # don't mess up with ArangoDB _id magic
         data["_key"] = str(uuid.uuid4())  # provide our own unique key, some UUID here

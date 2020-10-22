@@ -4,9 +4,7 @@ from logging import getLogger
 
 LOG = getLogger('root')
 
-# patch for endless recursion 
-# https://jira.collective.be/browse/PCM-1780
-
+# patch for endless recursion
 
 import plone.outputfilters
 
