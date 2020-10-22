@@ -1,0 +1,1 @@
+collective.import_content

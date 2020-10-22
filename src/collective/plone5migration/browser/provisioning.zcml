@@ -1,0 +1,209 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    >
+
+  <!-- Migration API -->
+  <browser:page
+      name="remote-exists"
+      for="*"
+      permission="zope2.View"
+      class=".provisioning_api.API"
+      attribute="remote_exists"
+      />
+
+  <browser:page
+      name="recreate-plone-site"
+      for="*"
+      permission="cmf.ManagePortal"
+      class=".provisioning_api.API"
+      attribute="recreate_plone_site"
+      />
+  
+  <browser:page
+      name="set-review-state"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="set_review_state"
+      />
+
+  <browser:page
+      name="set-default-page"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="set_default_page"
+      />
+  <browser:page
+      name="set-layout"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="set_layout"
+      />
+
+  <browser:page
+      name="set-owner"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="set_owner"
+      />
+
+
+  <browser:page
+      name="setuid"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="setuid"
+      />
+ 
+  <browser:page
+      name="set-created-modified"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="set_created_modified"
+      />
+
+  <browser:page
+      name="set-deferred-uids"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="set_deferred_uids"
+      />
+
+  <browser:page
+      name="convert-to-uids"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="convert_to_uids"
+      />
+
+  <browser:page
+      name="set-positions-in-parent"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="set_positions_in_parent"
+      />
+
+  <browser:page
+      name="set-position-in-parent"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="set_position_in_parent"
+      />
+ 
+  <browser:page
+      name="set-navigationroot"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="set_navigationroot"
+      />
+
+  <browser:page
+      name="set-allowed-and-addable-types"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="set_allowed_and_addable_types"
+      />
+
+  <browser:page
+      name="set-marker-interfaces"
+      for="*"
+      permission="cmf.ManagePortal"
+      class=".provisioning_api.API"
+      attribute="set_marker_interfaces"
+      />
+
+  <browser:page
+      name="set-permissions"
+      for="*"
+      permission="cmf.ManagePortal"
+      class=".provisioning_api.API"
+      attribute="set_permissions"
+      />
+
+
+  <browser:page
+      name="update-all-related-items"
+      for="*"
+      permission="cmf.ManagePortal"
+      class=".provisioning_api.API"
+      attribute="update_all_related_items"
+      />
+
+  <browser:page
+      name="update-all-imagerefs"
+      for="*"
+      permission="cmf.ManagePortal"
+      class=".provisioning_api.API"
+      attribute="update_imagerefs"
+      />
+
+  <browser:page
+      name="get-indexes"
+      for="*"
+      permission="zope2.View"
+      class=".provisioning_api.API"
+      attribute="get_indexes"
+      />
+
+  <browser:page
+      name="get-subdepartments"
+      for="*"
+      permission="zope2.View"
+      class=".provisioning_api.API"
+      attribute="get_subdepartments"
+      />
+
+  <browser:page
+      name="set-unavailable"
+      for="*"
+      permission="cmf.ManagePortal"
+      class=".provisioning_api.API"
+      attribute="set_unavailable"
+      />
+
+  <browser:page
+      name="add-portlet"
+      for="*"
+      permission="cmf.ManagePortal"
+      class=".provisioning_api.API"
+      attribute="add_portlet"
+      />
+
+  <browser:page
+      name="blacklist-portlets"
+      for="*"
+      permission="cmf.ManagePortal"
+      class=".provisioning_api.API"
+      attribute="blacklist_portlets"
+      />
+
+  <browser:page
+      name="prepare"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="prepare"
+      />
+
+  <browser:page
+      name="fixup"
+      for="*"
+      permission="cmf.ModifyPortalContent"
+      class=".provisioning_api.API"
+      attribute="fixup"
+      />
+
+</configure>

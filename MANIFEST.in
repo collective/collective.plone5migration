@@ -1,0 +1,4 @@
+graft src/ugent
+graft docs
+include *.rst
+global-exclude *.pyc
