@@ -452,40 +452,6 @@ class API(BrowserView):
 
         self.request.response.setStatus(204)
 
-    def update_imagerefs(self):
-        """ Update imageref fields (UGENT)"""
-
-        intids = getUtility(IIntIds)
-
-        catalog = plone.api.portal.get_tool("portal_catalog")
-        all_imagerefs = json.loads(self.request.BODY)
-
-        for uid, referenced_uid in all_imagerefs.items():
-            brains = catalog(UID=uid)
-            if not brains:
-                print(f"UID {uid} not found")
-                continue
-            obj = brains[0].getObject()
-
-            brains = catalog(UID=referenced_uid)
-            if brains:
-                obj.image_ref = RelationValue(intids.getId(brains[0].getObject()))
-
-        self.request.response.setStatus(204)
-
-    def get_subdepartments(self):
-        """ Return all subdepartments """
-
-        from collective.authorship.utils import get_authorship_settings
-
-        settings = get_authorship_settings()
-        subdepartments = [
-            "{}-{}".format(d["department"], d["subdepartment"])
-            for d in settings.subdepartments
-        ]
-
-        self.request.response.setHeader("content-type", "application/json")
-        return json.dumps(subdepartments)
 
     def set_permissions(self):
         """ Set marker interfaces on current object """
@@ -535,23 +501,6 @@ class API(BrowserView):
         self.request.response.setHeader("content-type", "application/json")
         return json.dumps(result)
 
-    def set_unavailable(self):
-        """ """
-
-        from collective.unavailable.interfaces import IUnavailableAnnotations
-
-        unavailable_annotations = json.loads(self.request.BODY)
-
-        annotations = IUnavailableAnnotations(self.context)
-        annotations["layout"] = unavailable_annotations.get("layout", None)
-        annotations["page"] = unavailable_annotations.get("page", None)
-        expiration = unavailable_annotations.get("expiration")
-        if expiration:
-            annotations["expiration"] = DateTime(expiration)
-
-        self.context.unavailable_url = unavailable_annotations.get("url")
-        self.context.unavailable_text = unavailable_annotations.get("text")
-        self.request.response.setStatus(204)
 
     def blacklist_portlets(self):
         """ Blacklist/block parent portlets """
@@ -593,13 +542,7 @@ class API(BrowserView):
         portlet_manager = data["portlet_manager"]
         portlet_data = data["portlet_data"]
 
-        # turn ugent portlet into standard plone collection portlet
-        if class_ == "collective.portlet.collection.portlet.UGentCollectionAssignment":
-#            class__ = "plone.portlet.collection.collection.Assignment"
-            class__ = "collective.portlet.collection.portlet.Assignment"
-            mod_name, class_name = class__.rsplit(".", 1)
-        else:
-            mod_name, class_name = class_.rsplit(".", 1)
+        mod_name, class_name = class_.rsplit(".", 1)
 
         # create assignment from something like 'collective.portlet.infolinks.portlet.Assignment'
         try:
@@ -612,27 +555,6 @@ class API(BrowserView):
 
         assignment_class = getattr(module, class_name)
         argspec = inspect.getargspec(assignment_class.__init__)
-
-        # drop data that does not match the signature of the assignment (base class)
-        if "UGentCollectionAssignment" in class_:
-#            portlet_data["uid"] = portlet_data["target_collection_uid"]
-            target_collection_path = portlet_data["target_collection"]
-            if target_collection_path is None:
-                return
-            portlet_data['uid'] = portlet_data['target_collection_uid']
-            del portlet_data["target_collection"]
-            del portlet_data["__name__"]
-            del portlet_data["target_collection_uid"]
-
-        elif "slideshow" in class_:
-            # images = [{path:..., uid:....}]
-            images = []
-            catalog = plone.api.portal.get_tool("portal_catalog")
-            for d in portlet_data["images"]:
-                brains = catalog(UID=d["uid"])
-                if brains:
-                    images.append(RelationValue(intids.getId(brains[0].getObject())))
-            portlet_data["images"] = images
 
         # extract parameters from `portlet_data`
         params = dict()
@@ -658,12 +580,8 @@ class API(BrowserView):
 
         data = json.loads(self.request.BODY)
         layout = data["layout"]
-#        if layout not in [
-#            "folder_listing_standardview",
-#            "folder_listing_nosort",
-#            "folder_listing_cronologic",
-#        ]:
-        self.context.setLayout(layout)
+        if layout not in []:
+            self.context.setLayout(layout)
         self.request.response.setStatus(204)
 
     def set_default_page(self):
@@ -678,92 +596,11 @@ class API(BrowserView):
     def fixup(self):
         """ Last phase fixup steps """
 
-        def _ugent_authorship_cleanup():
-
-            from collective.authorship.utils import get_authorship_settings
-
-            settings = get_authorship_settings()
-            departments = settings.departments
-            departments = dict([(d["name"], d) for d in departments])
-            subdepartments = settings.subdepartments
-
-            catalog = plone.api.portal.get_tool("portal_catalog")
-            brains = catalog(portal_type="Document")
-            num_brains = len(brains)
-            for i, brain in enumerate(brains):
-                subdepartment = brain.subdepartment
-                if not subdepartment:
-                    continue
-
-                obj = brain.getObject()
-                obj.setContributors([])
-                department_name, number = subdepartment.split("-")
-                department = departments[department_name]
-                coordinators = department["coordinators"].split(",")
-                backups = department["backups"].split(",")
-
-                print(
-                    i, num_brains, brain.getURL(), subdepartment, coordinators, backups
-                )
-                for username in coordinators + backups:
-                    lr = obj.__ac_local_roles__
-                    usernames_lr = lr.keys()
-                    if username in usernames_lr:
-                        user_roles = list(lr[username])
-                        if "Editor" in user_roles:
-                            user_roles.remove("Editor")
-                        lr[username] = user_roles
-
-                obj.reindexObjectSecurity()
-
-        _ugent_authorship_cleanup()
-
-        # re-enable content rules (PCM-1773)
-        storage = getUtility(IRuleStorage)
-        storage.active = True
-
         self.request.response.setStatus(200)
         return "DONE"
 
     def prepare(self):
         """ actions taken before the actual content migration """
-
-        def _ugent_authorship():
-            """ Read persistent collective.authership settings from JSON an store them within the registry """
-
-            from collective.authorship.utils import get_authorship_settings
-
-            json_fn = os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "migration",
-                "persistent-configurations.json",
-            )
-            with open(json_fn) as fp:
-                data = json.load(fp)
-            ua = data["collective.authorship"]
-
-            settings = get_authorship_settings()
-
-            departments = []
-            for d in ua["departments"]:
-                d["coordinators"] = d["coordinator"]
-                d["backups"] = d["backup"]
-                del d["coordinator"]
-                del d["backup"]
-                departments.append(d)
-            settings.departments = departments
-
-            subdepartments = []
-            for d in ua["subdepartments"]:
-                #                d['coordinators'] = d['coordinator']
-                #                d['backups'] = d['backup']
-                #                del d['coordinator']
-                #                del d['backup']
-                subdepartments.append(d)
-            settings.subdepartments = subdepartments
-
-        _ugent_authorship()
 
         self.request.response.setStatus(200)
         return "DONE"
