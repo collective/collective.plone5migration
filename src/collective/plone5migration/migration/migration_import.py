@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This scripts imports a JSON export made with `collective.jsonify` into
-# ArangoDB (database: ugent, collection: portal by default)
+# ArangoDB (database: collection, collection: portal by default)
 
 import re
 
@@ -72,28 +72,17 @@ PROCESSED_TYPES = [
     "Topic",
     "Event",
     "LibraryDocument",
-    "Vacancy",
-    "PhdDefense",
-    "ManualGroup"
 ]
 
 # Retrieve vocabularies via plone.restapi
 INTROSPECT_VOCABULARIES = [
-    "collective.vacancy.Contracts",
-    "collective.authorship.emptysubdepartments",
-    "collective.vocabularies.departments",
-    "collective.vacancy.OccupancyRates",
-    "collective.categories.newsitemcategories",
-    "collective.categories.eventcategories"
+    "some.addon.SomeVocabulary",
 ]
 
 # marker interfaces directly provided by content object (_directly_provided JSON key)
 # and supported by the migration
 SUPPORTED_MARKER_INTERFACES = [
     "plone.app.layout.navigation.interfaces.INavigationRoot",
-    "collective.imagelibrary.interfaces.IImageLibrary",
-    "collective.unavailable.interfaces.IUnavailable",
-    "collective.collectiondelete.interfaces.ICollectionDelete"
 ]
 
 PARENT_EXISTS_CACHE = dict()
@@ -251,25 +240,6 @@ class Migrator:
     def _auth(self):
         """ Credentials for Plone target site """
         return HTTPBasicAuth(self.config.plone.username, self.config.plone.password)
-
-
-    @timeit
-    def _get_subdepartments(self):
-
-        if not self._subdepartments:
-
-            LOG.info(f'reading vocabulary all subdepartments')
-            url = f"{self.config.plone.url}/{self.config.site.id}/@@get-subdepartments"
-            response = self.requests_session.get(
-                url, auth=self._auth, headers=self._json_headers
-            )
-            if response.status_code != 200:
-                raise MigrationError(
-                    f"Unable to retrieve subdepartments for {url}: {response.text}", response=response
-                )
-            self._subdepartments = response.json()
-        return self._subdepartments
-
 
     def read_vocabularies(self, names):
         """ Retrieve vacabularies via plone.restapi """
@@ -478,89 +448,6 @@ class Migrator:
                 subdepartment = ''
             data["subdepartment"] = subdepartment
 
-        elif object_data["_type"] == "LibraryDocument":
-            data["faculty_code"] = object_data.get("faculty_code")
-            data["id_socialmedia"] = object_data.get("id_socialmedia")
-            data["id_news"] = object_data.get("id_news")
-            data["id_highlights"] = object_data.get("id_highlights")
-            data["highlights_url"] = object_data.get("highlights_url")
-            data["id_dynamic_highlights"] = object_data.get("id_dynamic_highlights")
-            data["dynamic_highlights_pagelength"] = object_data.get(
-                "dynamic_highlights_pagelength"
-            )
-            data["toptext"] = object_data.get("toptext")
-            data["bottomtext"] = object_data.get("bottomtext")
-
-        elif object_data["_type"] == "PhdDefense":
-
-            data["last_name"] = object_data.get("lastName")
-            data["first_name"] = object_data.get("firstName")
-            student_number = object_data.get("studentNumber")
-            if len(student_number) != 8:
-                student_number = ('00000000' + student_number)[-8:]
-            data["student_number"] = student_number
-            data["faculty"] = object_data.get("faculty")
-            data["department"] = object_data.get("department")
-            data["curriculum"] = object_data.get("curriculum")
-            data["academic_degree"] = object_data.get("academicDegree")
-            data["academic_degree"] = object_data.get("academicDegree")
-            data["defense_language"] = object_data.get("defenseLanguage")
-            data["promotors"] = object_data.get("promoters")
-            data["examiners"] = object_data.get("examiners")
-            data["short_description"] = object_data.get("shortDescription")
-            data["location"] = object_data.get("defenseLocation")
-            data["street"] = object_data.get("defenseStreet")
-            data["number"] = object_data.get("defenseNumber")
-            data["postal_code"] = object_data.get("defensePostalCode")
-            data["city"] = object_data.get("defenseCity")
-            data["streaming_url"] = object_data.get("streamingUrl")
-            if object_data.get("defenseRegistration"):
-                registration_url = object_data["defenseRegistration"]
-                if URL_REGEX.match(registration_url) is not None:
-                    data["registration_url"] = registration_url
-            data["remark"] = object_data.get("defenseRemark")
-            data["translated_title"] = object_data.get("defenseTitleTranslation")
-            data["joint_phd"] = object_data.get("defenseJoinPhd")
-            data["interdisciplinary_phd"] = object_data.get("interDisciplinaryPhd")
-            data["contact"] = object_data.get("defenseContact")
-            data["show_contact"] = object_data.get("defenseShowContact")
-            data["date_and_time"] = object_data.get("defenseDateAndTime")
-
-            # UIDs must be assigned after full migration
-            self._deferred_uids[_key]['summary_nl'] = object_data.get("summaryDutch")
-            self._deferred_uids[_key]['summary_en'] = object_data.get("summaryEnglish")
-            self._deferred_uids[_key]['invitation'] = object_data.get("defenseInvitation")
-
-        elif object_data["_type"] == "ManualGroup":
-            data['@type'] = 'ContentGroup'
-            data['users'] = '\n'.join(object_data['groupMembers'])
-            if 'Contributor' in object_data.get('roles_', []):
-                data['contributor_group'] = True
-
-        elif object_data["_type"] == "Vacancy":
-            vt = object_data["vacancyType"]
-            if "-" in vt:  # e.g. oap-en
-                vacancy_type, vacancy_language = vt.split("-")
-            else:
-                vacancy_type, vacancy_language = vt, "nl"
-            data["vacancy_type"] = vacancy_type
-            data["vacancy_language"] = vacancy_language
-
-            occupancy_rate = object_data["occupancyRate"]
-            if self._check_value_in_vocabulary('collective.vacancy.OccupancyRates', occupancy_rate):
-                data["occupancy_rate"] = occupancy_rate
-
-            data["grade"] = object_data["grade"]
-            data["function_class"] = object_data["functionClass"]
-            data["degree"] = object_data["diploma"]
-            data["text"] = object_data["text"]
-            if object_data["lastApplicationDate"] not in (None, "None"):
-                data["last_application_date"] = object_data["lastApplicationDate"]
-            if self._check_value_in_vocabulary('collective.vacancy.Contracts', object_data["contract"]):
-                data["contract"] = object_data["contract"]
-            if self._check_value_in_vocabulary('collective.vocabularies.departments', object_data["department"]):
-                data["department"] = object_data["department"]
-
         elif object_data["_type"] == "Event":
             data["start"] = to_iso8601(object_data["startDate"])
             data["end"] = to_iso8601(object_data["endDate"])
@@ -575,31 +462,9 @@ class Migrator:
             data["attendees"] = object_data["contactPhone"]
             data["text"] = object_data["text"]
             categories = object_data.get('categories', [])
-            # categories is a quoted list in JSON? No idea why!?
-            if isinstance(categories, str):
-                # convert to list
-                categories = eval(categories)
-            categories = [c for c in categories if self._check_value_in_vocabulary('collective.categories.eventcategories', c)]
-            if categories:
-                data["categories"] = categories
 
         elif object_data["_type"] == "News Item":
             data["text"] = object_data["text"]
-
-            # categories is a quoted list in JSON? No idea why!?
-            categories = object_data.get("categories", [])
-            if isinstance(categories, str):
-                # convert to list
-                categories = eval(categories)
-            # filter for valid values
-            categories = [c for c in categories if self._check_value_in_vocabulary('collective.categories.newsitemcategories', c)]
-            if categories:
-                data["categories"] = categories
-
-            # UGENT: News Items reference images by UID
-            imageref = object_data.get("imageref")
-            if imageref:
-                self._all_imagerefs[object_data["_uid"]] = imageref
 
         elif object_data["_type"] == "File":
             try:
@@ -625,7 +490,6 @@ class Migrator:
                     f"ERROR: JSON export has no _datafield_image for {path} - SKIPPING"
                 )
                 return
-
 
             ct = img_data["content_type"]
 
@@ -655,96 +519,9 @@ class Migrator:
                 if iface in SUPPORTED_MARKER_INTERFACES
             ]
 
-            # UGENT: SubsiteFolder handling: folder with INavigationRoot set will be turned
-            # into a `SubsiteFolder instances
-            if (
-                "plone.app.layout.navigation.interfaces.INavigationRoot"
-                in directly_provided
-            ):
-                data["@type"] = "SubsiteFolder"
-
-                data['default_language'] = None
-
-                if 'topTitle' in object_data:
-                    data["top_title"] = object_data["topTitle"]
-                if 'feedbackName' in object_data:
-                    data["feedback_name"] = object_data["feedbackName"]
-                if 'feedbackAddress' in object_data:
-                    data["feedback_address"] = object_data["feedbackAddress"]
-                if 'showLanguageSwitch' in object_data:
-                    data["show_language_switch"] = object_data["showLanguageSwitch"]
-                if 'subsiteType' in object_data:
-                    subsite_type = object_data.get("subsiteType")
-#                    subsite_type = subsite_type.replace('_', '-') # normalized
-                    if subsite_type:
-                        data["subsite_type"] = subsite_type
-                if 'fatFooter' in object_data:
-                    data["fat_footer"] = object_data["fatFooter"]
-
-                # determine default_page and retrieve subsite_type folder specific information.
-                # This data must be applied after folder creation, after calling update_subsite_folder_behaviors()
-
-                default_page = object_data.get('_defaultpage')
-                if default_page:
-
-                    default_page_path = f"/{self.config.site.id}/{path}/{default_page}"
-                    default_page_data = self._object_by_key(self._object_by_path(default_page_path)['_key'])
-
-
-                    post_create_data["text"] = default_page_data.get("text", "")
-
-                    # central-other
-                    subsite_image_data = default_page_data.get("_datafield_homepageImage")
-                    if subsite_image_data:
-                        post_create_data["subsite_image"] = {
-                            "data": subsite_image_data["data"],
-                            "encoding": "base64",
-                            "content-type": subsite_image_data["content_type"],
-                            "filename": subsite_image_data["filename"],
-                        }
-
-                    central_image_data = default_page_data.get("_datafield_centralHomepageImage")
-                    if central_image_data:
-                        post_create_data["central_subsite_image"] = {
-                            "data": central_image_data["data"],
-                            "encoding": "base64",
-                            "content-type": central_image_data["content_type"],
-                            "filename": central_image_data["filename"],
-                        }
-
-                    target_image_data = default_page_data.get("_datafield_targetHomepageImage")
-                    if target_image_data:
-                        post_create_data["target_subsite_image"] = {
-                            "data": target_image_data["data"],
-                            "encoding": "base64",
-                            "content-type": target_image_data["content_type"],
-                            "filename": target_image_data["filename"],
-                        }
-
-                    focus_news_item = default_page_data.get("focusNewsitem")
-                    if focus_news_item:
-                        focus_news_item = eval(focus_news_item)
-                        if focus_news_item:
-                            self._deferred_uids[_key]['subsite_news_item_or_event_ref'] = focus_news_item[0]
-
-                    homepage_news_items = default_page_data.get("homepageNewsitems")
-                    if homepage_news_items:
-                        homepage_news_items = eval(homepage_news_items)
-                        if homepage_news_items:
-                            self._deferred_uids[_key]['central_subsite_news_item_refs'] = homepage_news_items
-
-
-            # language specific folders must the be SubsiteFolder too
-            if data['id'] in ['nl', 'en', 'kr']:
-                data["@type"] = "SubsiteFolder"
-
-
             data["navigation_root"] = (
                 True if object_data.get("navigation_root") in (True, "True") else False
             )
-            feedbackAddress = object_data.get("feedbackAddress")
-            if feedbackAddress:
-                data["feedbackAddress"] = feedbackAddress
 
         elif object_data["_type"] == "FormFolder":
             self._migrate_FormFolder(data, object_data)
@@ -752,17 +529,6 @@ class Migrator:
         elif object_data["_type"] == "Topic":
             self._migrate_Topic(data, object_data)
 
-
-        # collective.unavailable part I
-        directly_provided = object_data.get("_directly_provided", ())
-        if 'collective.unavailable.interfaces.IUnavailable' in directly_provided:
-            data['unavailable'] = True
-            unavailable_annotations = object_data['_annotations']['collective.unavailable']
-
-        # ugent specific `show_description` flag
-        show_description = object_data.get("show_description", False)
-        if show_description:
-            data["show_description"] = show_description
 
         resource_path = "/".join(path.split("/")[:-1])
         #        LOG.info('Creating', resource_path, data)
@@ -786,10 +552,6 @@ class Migrator:
         self._set_review_state(path, object_data)
         self._set_related_items(path, object_data)
         self._set_local_roles(path, object_data)
-        # UGent specific
-        # PCM-1778 mix-in sharing setting of default page
-        if data['@type'] == 'SubsiteFolder' and default_page_data:
-            self._set_local_roles(path, default_page_data)
 
         self._set_uid(path, object_data)
         self._set_created_modified(path, object_data)
