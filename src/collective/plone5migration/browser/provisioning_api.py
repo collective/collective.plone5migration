@@ -452,27 +452,6 @@ class API(BrowserView):
 
         self.request.response.setStatus(204)
 
-    def update_imagerefs(self):
-        """ Update imageref fields (UGENT)"""
-
-        intids = getUtility(IIntIds)
-
-        catalog = plone.api.portal.get_tool("portal_catalog")
-        all_imagerefs = json.loads(self.request.BODY)
-
-        for uid, referenced_uid in all_imagerefs.items():
-            brains = catalog(UID=uid)
-            if not brains:
-                print(f"UID {uid} not found")
-                continue
-            obj = brains[0].getObject()
-
-            brains = catalog(UID=referenced_uid)
-            if brains:
-                obj.image_ref = RelationValue(intids.getId(brains[0].getObject()))
-
-        self.request.response.setStatus(204)
-
     def set_permissions(self):
         """ Set marker interfaces on current object """
 
@@ -521,23 +500,6 @@ class API(BrowserView):
         self.request.response.setHeader("content-type", "application/json")
         return json.dumps(result)
 
-    def set_unavailable(self):
-        """ """
-
-        from collective.unavailable.interfaces import IUnavailableAnnotations
-
-        unavailable_annotations = json.loads(self.request.BODY)
-
-        annotations = IUnavailableAnnotations(self.context)
-        annotations["layout"] = unavailable_annotations.get("layout", None)
-        annotations["page"] = unavailable_annotations.get("page", None)
-        expiration = unavailable_annotations.get("expiration")
-        if expiration:
-            annotations["expiration"] = DateTime(expiration)
-
-        self.context.unavailable_url = unavailable_annotations.get("url")
-        self.context.unavailable_text = unavailable_annotations.get("text")
-        self.request.response.setStatus(204)
 
     def blacklist_portlets(self):
         """ Blacklist/block parent portlets """
@@ -579,13 +541,7 @@ class API(BrowserView):
         portlet_manager = data["portlet_manager"]
         portlet_data = data["portlet_data"]
 
-        # turn ugent portlet into standard plone collection portlet
-        if class_ == "collective.portlet.collection.portlet.UGentCollectionAssignment":
-#            class__ = "plone.portlet.collection.collection.Assignment"
-            class__ = "collective.portlet.collection.portlet.Assignment"
-            mod_name, class_name = class__.rsplit(".", 1)
-        else:
-            mod_name, class_name = class_.rsplit(".", 1)
+        mod_name, class_name = class_.rsplit(".", 1)
 
         # create assignment from something like 'collective.portlet.infolinks.portlet.Assignment'
         try:
@@ -598,27 +554,6 @@ class API(BrowserView):
 
         assignment_class = getattr(module, class_name)
         argspec = inspect.getargspec(assignment_class.__init__)
-
-        # drop data that does not match the signature of the assignment (base class)
-        if "UGentCollectionAssignment" in class_:
-#            portlet_data["uid"] = portlet_data["target_collection_uid"]
-            target_collection_path = portlet_data["target_collection"]
-            if target_collection_path is None:
-                return
-            portlet_data['uid'] = portlet_data['target_collection_uid']
-            del portlet_data["target_collection"]
-            del portlet_data["__name__"]
-            del portlet_data["target_collection_uid"]
-
-        elif "slideshow" in class_:
-            # images = [{path:..., uid:....}]
-            images = []
-            catalog = plone.api.portal.get_tool("portal_catalog")
-            for d in portlet_data["images"]:
-                brains = catalog(UID=d["uid"])
-                if brains:
-                    images.append(RelationValue(intids.getId(brains[0].getObject())))
-            portlet_data["images"] = images
 
         # extract parameters from `portlet_data`
         params = dict()
@@ -644,12 +579,8 @@ class API(BrowserView):
 
         data = json.loads(self.request.BODY)
         layout = data["layout"]
-#        if layout not in [
-#            "folder_listing_standardview",
-#            "folder_listing_nosort",
-#            "folder_listing_cronologic",
-#        ]:
-        self.context.setLayout(layout)
+        if layout not in []:
+            self.context.setLayout(layout)
         self.request.response.setStatus(204)
 
     def set_default_page(self):
@@ -669,11 +600,6 @@ class API(BrowserView):
 
     def prepare(self):
         """ actions taken before the actual content migration """
-
-        import pdb; pdb.set_trace()
-        for id in ['news']:
-            plone.api.content.delete(self.context[id])
-
 
         self.request.response.setStatus(200)
         return "DONE"
