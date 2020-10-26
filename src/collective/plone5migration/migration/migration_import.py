@@ -40,7 +40,7 @@ LOG = get_logger("migration.log")
 
 # folderish portal type for which we reconstruct the initial hierarchy in phase
 # 1
-FOLDERISH_PT = ["Folder"]
+FOLDERISH_PT = ["Folder", "RichFolder"]
 
 # portal types that are not processed or just ignored because they are
 # subobjects e.g. of FormFolder or Collection
@@ -68,6 +68,7 @@ PROCESSED_TYPES = [
     "Link",
     "File",
     "Image",
+    "RichFolder",
     "FormFolder",
     "Topic",
     "Event",
@@ -76,7 +77,6 @@ PROCESSED_TYPES = [
 
 # Retrieve vocabularies via plone.restapi
 INTROSPECT_VOCABULARIES = [
-    "some.addon.SomeVocabulary",
 ]
 
 # marker interfaces directly provided by content object (_directly_provided JSON key)
@@ -522,6 +522,10 @@ class Migrator:
             data["navigation_root"] = (
                 True if object_data.get("navigation_root") in (True, "True") else False
             )
+
+        elif object_data["_type"] == "RichFolder":
+            import pdb; pdb.set_trace()
+            data["_type"] = 'Folder'
 
         elif object_data["_type"] == "FormFolder":
             self._migrate_FormFolder(data, object_data)
@@ -1083,7 +1087,9 @@ class Migrator:
     def _set_review_state(self, resource_path, object_data):
         """ Set review state based on workflow history """
 
-        review_state = object_data["review_state"]
+        review_state = object_data.get("review_state")
+        if not review_state:
+            return
         data = dict(review_state=review_state)
         url = f"{self.config.plone.url}/{self.config.site.id}/{resource_path}/@@set-review-state"
         result = self.requests_session.post(
@@ -1173,6 +1179,7 @@ class Migrator:
         folder_data = self._object_by_path(folder_name)
         all_folder_keys.append(folder_data["_key"])
 
+        import pdb; pdb.set_trace()
         for portal_type, items in result_by_portal_type:
 
             if portal_type not in FOLDERISH_PT:
@@ -1181,6 +1188,7 @@ class Migrator:
 
             # sort folder paths by depth
             items = sorted(items, key=lambda x: x["path"].count("/"))
+            import pdb; pdb.set_trace()
             num_items = len(items)
             for i, item in enumerate(items):
 

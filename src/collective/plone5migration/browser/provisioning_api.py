@@ -76,7 +76,7 @@ class API(BrowserView):
 
         site = root[site_id]
         qi = site.portal_quickinstaller
-        for extension_id in extension_ids:
+        for extension_id in (extension_ids or ()):
             try:
                 product, profile = extension_id.split(":")
             except ValueError:
@@ -473,20 +473,6 @@ class API(BrowserView):
 
         self.request.response.setStatus(204)
 
-    def get_subdepartments(self):
-        """ Return all subdepartments """
-
-        from collective.authorship.utils import get_authorship_settings
-
-        settings = get_authorship_settings()
-        subdepartments = [
-            "{}-{}".format(d["department"], d["subdepartment"])
-            for d in settings.subdepartments
-        ]
-
-        self.request.response.setHeader("content-type", "application/json")
-        return json.dumps(subdepartments)
-
     def set_permissions(self):
         """ Set marker interfaces on current object """
 
@@ -678,92 +664,16 @@ class API(BrowserView):
     def fixup(self):
         """ Last phase fixup steps """
 
-        def _ugent_authorship_cleanup():
-
-            from collective.authorship.utils import get_authorship_settings
-
-            settings = get_authorship_settings()
-            departments = settings.departments
-            departments = dict([(d["name"], d) for d in departments])
-            subdepartments = settings.subdepartments
-
-            catalog = plone.api.portal.get_tool("portal_catalog")
-            brains = catalog(portal_type="Document")
-            num_brains = len(brains)
-            for i, brain in enumerate(brains):
-                subdepartment = brain.subdepartment
-                if not subdepartment:
-                    continue
-
-                obj = brain.getObject()
-                obj.setContributors([])
-                department_name, number = subdepartment.split("-")
-                department = departments[department_name]
-                coordinators = department["coordinators"].split(",")
-                backups = department["backups"].split(",")
-
-                print(
-                    i, num_brains, brain.getURL(), subdepartment, coordinators, backups
-                )
-                for username in coordinators + backups:
-                    lr = obj.__ac_local_roles__
-                    usernames_lr = lr.keys()
-                    if username in usernames_lr:
-                        user_roles = list(lr[username])
-                        if "Editor" in user_roles:
-                            user_roles.remove("Editor")
-                        lr[username] = user_roles
-
-                obj.reindexObjectSecurity()
-
-        _ugent_authorship_cleanup()
-
-        # re-enable content rules (PCM-1773)
-        storage = getUtility(IRuleStorage)
-        storage.active = True
-
         self.request.response.setStatus(200)
         return "DONE"
 
     def prepare(self):
         """ actions taken before the actual content migration """
 
-        def _ugent_authorship():
-            """ Read persistent collective.authership settings from JSON an store them within the registry """
+        import pdb; pdb.set_trace()
+        for id in ['news']:
+            plone.api.content.delete(self.context[id])
 
-            from collective.authorship.utils import get_authorship_settings
-
-            json_fn = os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "migration",
-                "persistent-configurations.json",
-            )
-            with open(json_fn) as fp:
-                data = json.load(fp)
-            ua = data["collective.authorship"]
-
-            settings = get_authorship_settings()
-
-            departments = []
-            for d in ua["departments"]:
-                d["coordinators"] = d["coordinator"]
-                d["backups"] = d["backup"]
-                del d["coordinator"]
-                del d["backup"]
-                departments.append(d)
-            settings.departments = departments
-
-            subdepartments = []
-            for d in ua["subdepartments"]:
-                #                d['coordinators'] = d['coordinator']
-                #                d['backups'] = d['backup']
-                #                del d['coordinator']
-                #                del d['backup']
-                subdepartments.append(d)
-            settings.subdepartments = subdepartments
-
-        _ugent_authorship()
 
         self.request.response.setStatus(200)
         return "DONE"

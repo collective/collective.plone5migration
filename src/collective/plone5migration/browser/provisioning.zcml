@@ -159,22 +159,6 @@
       />
 
   <browser:page
-      name="get-subdepartments"
-      for="*"
-      permission="zope2.View"
-      class=".provisioning_api.API"
-      attribute="get_subdepartments"
-      />
-
-  <browser:page
-      name="set-unavailable"
-      for="*"
-      permission="cmf.ManagePortal"
-      class=".provisioning_api.API"
-      attribute="set_unavailable"
-      />
-
-  <browser:page
       name="add-portlet"
       for="*"
       permission="cmf.ManagePortal"
