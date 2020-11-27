@@ -143,14 +143,6 @@
       />
 
   <browser:page
-      name="update-all-imagerefs"
-      for="*"
-      permission="cmf.ManagePortal"
-      class=".provisioning_api.API"
-      attribute="update_imagerefs"
-      />
-
-  <browser:page
       name="get-indexes"
       for="*"
       permission="zope2.View"
